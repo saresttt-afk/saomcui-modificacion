@@ -1986,6 +1986,24 @@ extends Screen {
                 return true;
             }
         }
+        if (this.itemsPanelActive()) {
+            float w = (float)this.f_96543_ / scale;
+            float h = (float)this.f_96544_ / scale;
+            float rootX = w / 2.0f - 60.0f - 170.0f;
+            float panelX = rootX + 37.0f + 160.0f + 20.0f + 10.0f;
+            float panelY = h / 2.0f - 158.0f + this.cachedSlideY;
+            double localX = mouseX / (double)scale;
+            double localY = mouseY / (double)scale;
+            if (localX >= panelX && localX <= panelX + 330.0f
+                && localY >= panelY && localY <= panelY + 316.0f) {
+                if (scrollY > 0.0) {
+                    this.itemsCategoryIndex = Math.max(0, this.itemsCategoryIndex - 1);
+                } else if (scrollY < 0.0) {
+                    this.itemsCategoryIndex = Math.min(ITEM_CATEGORY_NAMES.length - 1, this.itemsCategoryIndex + 1);
+                }
+                return true;
+            }
+        }
         if (this.selectedIndex == 2 && this.currentSubNodes == null) {
             List<String> friends;
             List<ChatPacket.Channel> availChannels = this.getAvailableChatChannels();
