@@ -116,6 +116,7 @@ extends Screen {
     private int recipeSize;
     private final List<SAOMenuNode> rootNodes = new ArrayList<SAOMenuNode>();
     private int selectedIndex = -1;
+    private int itemsCategoryIndex = 0;
     private int subSelectedIndex = -1;
     private int subSubSelectedIndex = -1;
     private int sssSelectedIndex = -1;
@@ -213,7 +214,7 @@ extends Screen {
 
     private void positionMap() {
         this.mapPanelScale = this.menuScale();
-        float rootX = (float)this.f_96543_ / this.mapPanelScale / 2.0f - 60.0f;
+        float rootX = (float)this.f_96543_ / this.mapPanelScale / 2.0f - 60.0f - (this.itemsPanelActive() ? 170.0f : 0.0f);
         this.mapPanelX = Math.round((rootX + 50.0f) * this.mapPanelScale);
         this.mapPanelY = Math.round((float)this.f_96544_ / 2.0f - 125.0f * this.mapPanelScale + this.cachedSlideY * this.mapPanelScale);
     }
@@ -237,6 +238,122 @@ extends Screen {
         this.mapContent.m_88315_(g, (int)((float)(mx - this.mapPanelX) / this.mapPanelScale), (int)((float)(my - this.mapPanelY) / this.mapPanelScale), dt);
         g.m_280168_().m_85849_();
         g.m_280618_();
+    }
+
+
+    private boolean itemsPanelActive() {
+        return this.selectedIndex == 0 && this.subSelectedIndex == 1;
+    }
+
+    private static final String[] ITEM_CATEGORY_NAMES = {
+        "Weapons", "Armor", "Tools", "Food", "Potions", "Relics", "Materials", "Misc."
+    };
+    private static final String[] ITEM_CATEGORY_ICONS = {
+        "\u2694", "\u26e8", "\u26cf", "\ud83c\udf56", "\ud83e\uddea", "\ud83d\udc8e", "\ud83e\udea8", "\ud83d\udce6"
+    };
+    private static final int[] ITEM_CATEGORY_SIZES = {4, 4, 4, 3, 5, 4, 6, 6};
+
+    private int itemCategoryStart(int category) {
+        int start = 0;
+        for (int i = 0; i < category; ++i) start += ITEM_CATEGORY_SIZES[i];
+        return start;
+    }
+
+    private void renderItemsCategoryPanel(GuiGraphics g, int mouseX, int mouseY, float scale, float w, float h, float rootX) {
+        if (!this.itemsPanelActive()) return;
+        float panelX = rootX + 37.0f + 160.0f + 20.0f + 10.0f;
+        float panelY = h / 2.0f - 158.0f + this.cachedSlideY;
+        float panelW = 330.0f;
+        float panelH = 316.0f;
+        g.m_280163_(new ResourceLocation("saomcui:textures/gui/window_blank.png"), (int)panelX, (int)panelY, 0.0f, 0.0f, (int)panelW, (int)panelH, (int)panelW, (int)panelH);
+        g.m_280509_((int)panelX + 1, (int)panelY + 1, (int)(panelX + panelW - 1), (int)(panelY + 31), -1512724);
+        g.m_280056_(this.f_96547_, "Items", (int)panelX + 12, (int)panelY + 11, -13619152, false);
+        float tabsX = panelX + 8.0f;
+        float tabsY = panelY + 39.0f;
+        for (int i = 0; i < ITEM_CATEGORY_NAMES.length; ++i) {
+            float y = tabsY + i * 33.0f;
+            boolean active = i == this.itemsCategoryIndex;
+            boolean hovered = mouseX / scale >= tabsX && mouseX / scale <= tabsX + 116.0f && mouseY / scale >= y && mouseY / scale <= y + 29.0f;
+            g.m_280509_((int)tabsX, (int)y, (int)(tabsX + 116.0f), (int)(y + 29.0f), active ? -1336576 : (hovered ? -855638017 : -1711276033));
+            g.m_280056_(this.f_96547_, ITEM_CATEGORY_ICONS[i] + " " + ITEM_CATEGORY_NAMES[i], (int)tabsX + 6, (int)y + 10, active ? -1 : -13619152, false);
+        }
+        float slotsX = panelX + 137.0f;
+        float slotsY = panelY + 47.0f;
+        g.m_280056_(this.f_96547_, ITEM_CATEGORY_NAMES[this.itemsCategoryIndex], (int)slotsX, (int)panelY + 35, -13619152, false);
+        int categorySize = ITEM_CATEGORY_SIZES[this.itemsCategoryIndex];
+        int start = itemCategoryStart(this.itemsCategoryIndex);
+        for (int i = 0; i < categorySize; ++i) {
+            int col = i % 3;
+            int row = i / 3;
+            int x = (int)slotsX + col * 58;
+            int y = (int)slotsY + row * 58;
+            g.m_280509_(x, y, x + 48, y + 48, -3748399);
+            g.m_280509_(x + 2, y + 2, x + 46, y + 46, -1446160);
+            if (this.f_96541_ != null && this.f_96541_.f_91074_ != null) {
+                final int slot = start + i;
+                this.f_96541_.f_91074_.getCapability(SAOInventory.CAPABILITY).ifPresent(inv -> {
+                    if (slot >= inv.getSlots().size()) return;
+                    SAOInventory.SAOStack stack = inv.getStackInSlot(slot);
+                    if (stack.count <= 0 || stack.item.m_41619_()) return;
+                    ItemStack shown = stack.item.m_41777_();
+                    shown.m_41764_(stack.count);
+                    g.m_280480_(shown, x + 14, y + 14);
+                    g.m_280370_(this.f_96547_, shown, x + 14, y + 14);
+                });
+            }
+            if (mouseX / scale >= x && mouseX / scale <= x + 48 && mouseY / scale >= y && mouseY / scale <= y + 48) {
+                g.m_280509_(x, y, x + 48, y + 48, 0x55FFFFFF);
+            }
+        }
+        g.m_280056_(this.f_96547_, "Click: equip  |  Right-click: drop", (int)panelX + 12, (int)(panelY + panelH - 18), -11182749, false);
+    }
+
+    private boolean handleItemsCategoryClick(double mouseX, double mouseY, int button, float scale, float w, float h, float rootX) {
+        if (!this.itemsPanelActive()) return false;
+        float panelX = rootX + 37.0f + 160.0f + 20.0f + 10.0f;
+        float panelY = h / 2.0f - 158.0f + this.cachedSlideY;
+        if (mouseX / scale < panelX || mouseX / scale > panelX + 330.0f || mouseY / scale < panelY || mouseY / scale > panelY + 316.0f) return false;
+        float tabsX = panelX + 8.0f;
+        float tabsY = panelY + 39.0f;
+        for (int i = 0; i < ITEM_CATEGORY_NAMES.length; ++i) {
+            float y = tabsY + i * 33.0f;
+            if (mouseX / scale >= tabsX && mouseX / scale <= tabsX + 116.0f && mouseY / scale >= y && mouseY / scale <= y + 29.0f) {
+                this.itemsCategoryIndex = i;
+                this.playSound("ui.click");
+                return true;
+            }
+        }
+        float slotsX = panelX + 137.0f;
+        float slotsY = panelY + 47.0f;
+        for (int i = 0; i < ITEM_CATEGORY_SIZES[this.itemsCategoryIndex]; ++i) {
+            int col = i % 3;
+            int row = i / 3;
+            float x = slotsX + col * 58.0f;
+            float y = slotsY + row * 58.0f;
+            if (mouseX / scale < x || mouseX / scale > x + 48.0f || mouseY / scale < y || mouseY / scale > y + 48.0f) continue;
+            int slot = itemCategoryStart(this.itemsCategoryIndex) + i;
+            if (this.f_96541_ != null && this.f_96541_.f_91074_ != null) {
+                final int itemSlot = slot;
+                this.f_96541_.f_91074_.getCapability(SAOInventory.CAPABILITY).ifPresent(inv -> {
+                    if (itemSlot >= inv.getSlots().size()) return;
+                    SAOInventory.SAOStack stack = inv.getStackInSlot(itemSlot);
+                    if (stack.count <= 0 || stack.item.m_41619_()) return;
+                    if (button == 1) {
+                        String name = stack.item.m_41786_().getString() + " x" + stack.count;
+                        this.showConfirmation("Drop " + name + "?", "Are you sure you want to drop this item?", () -> {
+                            SAOPacketHandler.sendToServer(new ItemActionPacket(itemSlot, ItemActionPacket.ActionType.DROP_SAO));
+                            this.refreshNodes();
+                        });
+                    } else {
+                        SAOPacketHandler.sendToServer(new ItemActionPacket(itemSlot, ItemActionPacket.ActionType.EQUIP_SAO));
+                        this.refreshNodes();
+                    }
+                });
+            }
+            this.playSound("ui.click");
+            return true;
+        }
+        return true;
     }
 
     private float menuScale() {
@@ -676,7 +793,7 @@ extends Screen {
         float h = (float)this.f_96544_ / scale;
         float animEase = SAOFloatMotion.ease(progress);
         this.cachedSlideY = this.closing ? -(h / 2.0f + 190.0f) * (1.0f - animEase) : (1.0f - animEase) * 22.0f;
-        float rootX = w / 2.0f - 60.0f;
+        float rootX = w / 2.0f - 60.0f - (this.itemsPanelActive() ? 170.0f : 0.0f);
         float rootTotalH = this.rootNodes.size() * 55;
         float rootStartY = h / 2.0f - rootTotalH / 2.0f;
         RenderSystem.enableBlend();
@@ -764,6 +881,7 @@ extends Screen {
                 }
             }
         }
+        this.renderItemsCategoryPanel(graphics, mouseX, mouseY, scale, w, h, rootX);
         if (this.isCraftingActive()) {
             int gridWidth;
             float cardW = 550.0f;
@@ -1647,6 +1765,7 @@ extends Screen {
                 return true;
             }
         }
+        if (this.handleItemsCategoryClick(mouseX, mouseY, button, scale, w, h, rootX)) return true;
         boolean hit = false;
         for (int i = 0; i < this.rootNodes.size(); ++i) {
             float y = rootStartY + (float)(i * 55) + this.cachedSlideY;
@@ -1766,7 +1885,7 @@ extends Screen {
         if (!hit && this.selectedIndex == 0) {
             float w2 = (float)this.f_96543_ / scale;
             h2 = (float)this.f_96544_ / scale;
-            rootX2 = w2 / 2.0f - 60.0f;
+            rootX2 = w2 / 2.0f - 60.0f - (this.itemsPanelActive() ? 170.0f : 0.0f);
             float cardW = 200.0f;
             float cardH = 300.0f;
             float cardX = rootX2 - 250.0f;
@@ -1863,6 +1982,24 @@ extends Screen {
                 } else if (scrollY < 0.0) {
                     int maxOffset = Math.max(0, maxRows - 5);
                     this.craftingInvScroll = Math.min(maxOffset, this.craftingInvScroll + 1);
+                }
+                return true;
+            }
+        }
+        if (this.itemsPanelActive()) {
+            float w = (float)this.f_96543_ / scale;
+            float h = (float)this.f_96544_ / scale;
+            float rootX = w / 2.0f - 60.0f - 170.0f;
+            float panelX = rootX + 37.0f + 160.0f + 20.0f + 10.0f;
+            float panelY = h / 2.0f - 158.0f + this.cachedSlideY;
+            double localX = mouseX / (double)scale;
+            double localY = mouseY / (double)scale;
+            if (localX >= panelX && localX <= panelX + 330.0f
+                && localY >= panelY && localY <= panelY + 316.0f) {
+                if (scrollY > 0.0) {
+                    this.itemsCategoryIndex = Math.max(0, this.itemsCategoryIndex - 1);
+                } else if (scrollY < 0.0) {
+                    this.itemsCategoryIndex = Math.min(ITEM_CATEGORY_NAMES.length - 1, this.itemsCategoryIndex + 1);
                 }
                 return true;
             }
