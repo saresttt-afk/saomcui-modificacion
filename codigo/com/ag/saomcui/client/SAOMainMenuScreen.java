@@ -261,7 +261,7 @@ extends Screen {
 
     private void renderItemsCategoryPanel(GuiGraphics g, int mouseX, int mouseY, float scale, float w, float h, float rootX) {
         if (!this.itemsPanelActive()) return;
-        float panelX = rootX + 37.0f + 160.0f + 20.0f + 160.0f + 20.0f + 10.0f;
+        float panelX = rootX + 37.0f + 160.0f + 20.0f + 10.0f;
         float panelY = h / 2.0f - 158.0f + this.cachedSlideY;
         float panelW = 330.0f;
         float panelH = 316.0f;
@@ -310,7 +310,7 @@ extends Screen {
 
     private boolean handleItemsCategoryClick(double mouseX, double mouseY, int button, float scale, float w, float h, float rootX) {
         if (!this.itemsPanelActive()) return false;
-        float panelX = rootX + 37.0f + 160.0f + 20.0f + 160.0f + 20.0f + 10.0f;
+        float panelX = rootX + 37.0f + 160.0f + 20.0f + 10.0f;
         float panelY = h / 2.0f - 158.0f + this.cachedSlideY;
         if (mouseX / scale < panelX || mouseX / scale > panelX + 330.0f || mouseY / scale < panelY || mouseY / scale > panelY + 316.0f) return false;
         float tabsX = panelX + 8.0f;
